@@ -1,47 +1,46 @@
-#!/usr/bin/env python3
-"""Script for Tkinter GUI chat client."""
-from socket import AF_INET, socket, SOCK_STREAM
-from threading import Thread
 import tkinter
 
-top = tkinter.Tk()
-top.title("Chat Room")
+class GUI:
+    def __init__(self, master, client):
+        self.master = master
+        self.master.title = "P2P Chat"
 
-def callback(event):
-    print("Clicked!")
-    my_msg.delete(0, 'end')
+        self.client = client
 
-def key(event):
-    print("pressed", repr(event.char))
+        self.messages_frame = tkinter.Frame(self.master)
+        self.my_msg = tkinter.StringVar()  # For the messages to be sent.
+        self.my_msg.set("")
+        self.scrollbar = tkinter.Scrollbar(self.messages_frame)  # To navigate through past messages.
+        # Following will contain the messages.
+        self.msg_list = tkinter.Listbox(self.messages_frame, height=15, width=50, yscrollcommand=self.scrollbar.set)
+        self.scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
+        self.msg_list.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
+        self.msg_list.pack()
+        self.messages_frame.pack()
 
-def on_closing():
-    """This function is to be called when the window is closed."""
-    # my_msg.set("{quit}")
-    top.destroy()
+        self.entry_field = tkinter.Entry(self.master, textvariable=self.my_msg)
+        self.entry_field.bind("<Return>", self.send_msg)
+        self.entry_field.pack()
+        self.send_button = tkinter.Button(self.master, text="Send", command=self.send_msg)
+        self.send_button.pack()
 
-messages_frame = tkinter.Frame(top)
-# For the messages to be sent.
-my_msg = tkinter.StringVar()  
-my_msg.set("Type your messages here.")
-tkinter.Label(top, textvariable = my_msg).pack()
-# To navigate through past messages.
-scrollbar = tkinter.Scrollbar(messages_frame)  
-# Following will contain the messages.
-msg_list = tkinter.Listbox(messages_frame, height=15, width=50, yscrollcommand=scrollbar.set)
+        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-# Packing
-scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
-msg_list.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
-msg_list.pack()
-messages_frame.pack()
 
-entry_field = tkinter.Entry(top, textvariable=my_msg)
-entry_field.bind("<Key>", key)
-entry_field.pack()
+    def update_msg(self):
+        while True:
+            msg = self.client.receive()
+            self.msg_list.insert(tkinter.END, msg)
 
-send_button = tkinter.Button(top, text="Send", command=key)
-send_button.pack()
+    def send_msg(self, event=None):
+        msg = self.my_msg.get()
+        self.client.send(msg)
+        self.my_msg.set("")
+        if msg == "{quit}":
+            self.master.quit()
 
-top.protocol("WM_DELETE_WINDOW", on_closing)
+    def on_closing(self, event=None):
+        """This function is to be called when the window is closed."""
+        self.my_msg.set("{quit}")
+        self.send_msg()
 
-tkinter.mainloop()  # Starts GUI execution.
