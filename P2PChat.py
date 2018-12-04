@@ -7,6 +7,7 @@ from threading import Thread
 
 
 def main():
+    
     # ----Now comes the sockets part----
     start_server = input('Host new server (y/n): ')
     HOST = input('Enter host: ')
@@ -27,7 +28,7 @@ def main():
 
     print("GOT HERE")
     client = Client(ADDR)
-
+    
     root = Tk()
     my_gui = GUI(root, client)
 

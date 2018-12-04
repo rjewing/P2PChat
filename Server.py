@@ -28,6 +28,7 @@ class Server:
     def shutdown(self):
         self.SERVER.close()
 
+
     def accept_incoming_connections(self):
         """Sets up handling for incoming clients."""
         while True:
