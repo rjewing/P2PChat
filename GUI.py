@@ -60,6 +60,7 @@ class Initialize_Page(tk.Frame):
     def __init__(self, master):
         self.master = master
         tk.Frame.__init__(self, self.master)
+        master.geometry('200x100') # Size 200, 200
         print("Asking for inputs!")
         tk.Label(self, text="Please provide your inputs").grid(row=0, columnspan=2)
         
@@ -76,7 +77,7 @@ class Initialize_Page(tk.Frame):
         # tk.Button(self, text="Open page two").pack()
         tk.Button(self, text='Join', command=lambda: self.master.switch_frame(start_Chatroom, self.host.get(),
                 self.port.get())).grid(row=3, column=0, sticky='W', pady=4)
-        tk.Button(self, text='Quit', command=self.master.quit).grid(row=3, column=2, pady=4, sticky='E')
+        tk.Button(self, text='Quit', command=self.master.quit).grid(row=3, column=1, pady=4, sticky='E')
         tk.Button(self, text='Check', command=lambda: self.printVal()).grid(row=3, column=1, sticky='W', pady=4)
 
     def printVal(self):
@@ -89,6 +90,7 @@ class start_Chatroom(tk.Frame):
         self.master = master
         tk.Frame.__init__(self, self.master)
         self.master.title = "P2P Chat"
+        master.geometry('330x350') # Size 200, 200
 
         self.messages_frame = tk.Frame(self.master)
         self.my_msg = tk.StringVar()  # For the messages to be sent.
@@ -102,9 +104,13 @@ class start_Chatroom(tk.Frame):
 
         self.entry_field = tk.Entry(self.master, textvariable=self.my_msg)
         self.entry_field.bind("<Return>", self.send_msg)
-        self.entry_field.grid()
+        self.entry_field.grid(row=2, column=0, pady=4, sticky='W', columnspan = 2)
         self.send_button = tk.Button(self.master, text="Send", command=self.send_msg)
-        self.send_button.grid()
+        self.send_button.grid(row=2, column=0, pady=4, sticky='E')
+        
+        tk.Button(self, text='Check', command=lambda: self.printVal()).grid(row=3, column=2, sticky='W', pady=4)
+        tk.Button(self, text="Return",command=lambda: self.master.switch_frame(Initialize_Page)).grid(row=3, column=1, pady=4, sticky='W')
+        tk.Button(self, text='Quit', command=self.master.quit).grid(row=3, column=3, pady=4, sticky='W')
 
         self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -113,7 +119,9 @@ class start_Chatroom(tk.Frame):
         port = int(port)
 
         self.client = Client((host, port))
-
+    
+    def printVal(self):
+        print(self.entry_field.get())
 
     def update_msg(self):
         while True:
