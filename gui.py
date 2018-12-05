@@ -41,23 +41,41 @@ class GUI(tk.Tk):
         self._frame = new_frame
         self._frame.grid()
 
-class Initialize_Page(tk.Frame):
+class Initialize_Page(tk.Frame):    
     def __init__(self, master):
-        super(Initialize_Page, self).__init__()
+        tk.Frame.__init__(self,master)
         print("Asking for inputs!")
-        tk.Label(self, text="Please provide your inputs").pack(side="top", fill="x", pady=10)
+        tk.Label(self, text="Please provide your inputs").grid(row=0, columnspan=2)
         
         # Add two text boxes
-        tk.Label(master, text="Host").grid(row=0)
-        tk.Label(master, text="Port").grid(row=1)
-        tk.Entry(master).grid(row=0, column=1)
-        tk.Entry(master).grid(row=1, column=1)
+        tk.Label(self, text="Host").grid(row=1, sticky='W', padx=4)
+        tk.Label(self, text="Port").grid(row=2, sticky='W',padx=4)
+
+        self.host = tk.Entry(self)
+        self.host.grid(row=1, column=1)
+        self.port = tk.Entry(self)
+        self.port.grid(row=2, column=1)
         
         # tk.Button(self, text="Open page one").pack()
         # tk.Button(self, text="Open page two").pack()
-        # tk.Button(master, text='Quit', command=master.quit).grid(row=3, column=0, sticky=W, pady=4)
-        # tk.Button(master, text='Show', command=show_entry_fields).grid(row=3, column=1, sticky=W, pady=4)
+        tk.Button(self, text='Join', command=lambda:master.switch_frame(start_Chatroom)).grid(row=3, column=0, sticky='W', pady=4)
+        tk.Button(self, text='Quit', command=master.quit).grid(row=3, column=2, pady=4, sticky='E')
+        tk.Button(self, text='Check', command=lambda:self.printVal()).grid(row=3, column=1, sticky='W', pady=4)
 
+    def printVal(self):
+        print(self.host.get())
+        print(self.port.get())
+        
+        
+class start_Chatroom(tk.Frame):
+    def __init__(self, master):
+        tk.Frame.__init__(self,master)
+        print("Get ready to chat!")
+        tk.Label(self, text="Welcome to the chatroom!").grid(row=0, columnspan=2)
+        print("Host: ")
+        print("Port: ")
+        tk.Button(self, text='Quit', command=master.quit).grid(row=1, column=1, pady=4, sticky='E')
+        tk.Button(self, text="Return to credentials page",command=lambda: master.switch_frame(Initialize_Page)).grid(row=1, column=0, pady=4, sticky='E')
 
     def update_msg(self):
         while True:
