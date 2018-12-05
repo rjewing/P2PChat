@@ -87,6 +87,7 @@ class Initialize_Page(tk.Frame):
 class start_Chatroom(tk.Frame):
     def __init__(self, master, host, port):
         self.master = master
+        tk.Frame.__init__(self, self.master)
         self.master.title = "P2P Chat"
 
         self.messages_frame = tk.Frame(self.master)
@@ -95,7 +96,7 @@ class start_Chatroom(tk.Frame):
         self.scrollbar = tk.Scrollbar(self.messages_frame)  # To navigate through past messages.
         # Following will contain the messages.
         self.msg_list = tk.Listbox(self.messages_frame, height=15, width=50, yscrollcommand=self.scrollbar.set)
-        self.scrollbar.grid(row=0, column=0, sticky='E', columnspan=4)
+        self.scrollbar.grid(row=0, column=1, sticky='E', rowspan=4)
         self.msg_list.grid(row=0, column=0, sticky='N')
         self.messages_frame.grid()
 
