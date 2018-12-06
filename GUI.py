@@ -1,51 +1,64 @@
 import tkinter as tk
+import threading
 
-from Client import Client
-from Server import Server
-
-from threading import Thread
+from tkinter import scrolledtext
+from tkinter import messagebox
 
 
-class GUI(tk.Tk):
-    '''
-    def __init__(self, master, client):
-        self.master = master
-        self.master.title = "P2P Chat"
+ENCODING = 'utf-8'
 
+
+class GUI(threading.Thread):
+    def __init__(self, client):
+        super().__init__(daemon=False, target=self.run)
+        self.font = ('Helvetica', 13)
         self.client = client
+        self.server = None
+        self.login_window = None
+        self.main_window = None
 
-        self.messages_frame = tkinter.Frame(self.master)
-        self.my_msg = tkinter.StringVar()  # For the messages to be sent.
-        self.my_msg.set("")
-        self.scrollbar = tkinter.Scrollbar(self.messages_frame)  # To navigate through past messages.
-        # Following will contain the messages.
-        self.msg_list = tkinter.Listbox(self.messages_frame, height=15, width=50, yscrollcommand=self.scrollbar.set)
-        self.scrollbar.pack(side=tkinter.RIGHT, fill=tkinter.Y)
-        self.msg_list.pack(side=tkinter.LEFT, fill=tkinter.BOTH)
-        self.msg_list.pack()
-        self.messages_frame.pack()
+    def run(self):
+        self.login_window = LoginWindow(self, self.font)
+        print("Login done")
+        self.main_window = ChatWindow(self, self.font)
+        print("Main window done")
+        self.notify_server(self.login_window.login, 'login')
+        print("Notified server of login")
 
-        self.entry_field = tkinter.Entry(self.master, textvariable=self.my_msg)
-        self.entry_field.bind("<Return>", self.send_msg)
-        self.entry_field.pack()
-        self.send_button = tkinter.Button(self.master, text="Send", command=self.send_msg)
-        self.send_button.pack()
+        self.main_window.run()
 
-        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
-    '''
-    def __init__(self):
-        tk.Tk.__init__(self)
-        self._frame = None
-        self.center(self)
-        self.switch_frame(Initialize_Page)
+    @staticmethod
+    def display_alert(message):
+        """Display alert box"""
+        messagebox.showinfo('Error', message)
 
-    def switch_frame(self, frame_class, *args):
-        # Destroy the current frame and replace it with the new one
-        new_frame = frame_class(self, *args)
-        if self._frame is not None:
-            self._frame.destroy()
-        self._frame = new_frame
-        self._frame.grid()
+    def update_login_list(self, active_users):
+        """Update login list in main window with list of users"""
+        self.main_window.update_login_list(active_users)
+
+    def display_message(self, message):
+        """Display message in ChatWindow"""
+        self.main_window.display_message(message)
+
+    def send_message(self, message):
+        """Enqueue message in client's queue"""
+        self.client.queue.put(message)
+
+    def set_target(self, target):
+        """Set target for messages"""
+        self.client.target = target
+
+    def notify_server(self, message, action):
+        """Notify server after action was performed"""
+        data = action + ";" + message
+        data = data.encode(ENCODING)
+        self.client.notify_server(data, action)
+
+    def login(self, login):
+        self.client.notify_server(login, 'login')
+
+    def logout(self, logout):
+        self.client.notify_server(logout, 'logout')
 
     def center(self, win):
         win.update_idletasks()
@@ -56,87 +69,231 @@ class GUI(tk.Tk):
         win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
 
-class Initialize_Page(tk.Frame):
-    def __init__(self, master):
-        self.master = master
-        tk.Frame.__init__(self, self.master)
-        print("Asking for inputs!")
-        tk.Label(self, text="Please provide your inputs").grid(row=0, columnspan=2)
+class Window(object):
+    def __init__(self, title, font):
+        self.root = tk.Tk()
+        self.title = title
+        self.root.title(title)
+        self.font = font
+
+
+class LoginWindow(Window):
+    def __init__(self, gui, font):
+        super().__init__("Login", font)
+        self.gui = gui
+        self.label = None
+        self.entry = None
+        self.button = None
+        self.login = None
+
+        self.host_entry = None
+        self.port_entry = None
+
+        self.host = None
+        self.port = None
+
+        self.build_window()
+        self.run()
+
+    def build_window(self):
+        self.label = tk.Label(self.root, text="Select a server to join or host your own!").grid(row=0, columnspan=3)
         
         # Add two text boxes
-        tk.Label(self, text="Host").grid(row=1, sticky='W', padx=4)
-        tk.Label(self, text="Port").grid(row=2, sticky='W', padx=4)
+        tk.Label(self.root, text="Host").grid(row=1, sticky='W', padx=4)
+        tk.Label(self.root, text="Port").grid(row=2, sticky='W', padx=4)
+        tk.Label(self.root, text="Name").grid(row=3, sticky='W', padx=4)
 
-        self.host = tk.Entry(self)
-        self.host.grid(row=1, column=1)
-        self.port = tk.Entry(self)
-        self.port.grid(row=2, column=1)
-        
-        # tk.Button(self, text="Open page one").pack()
-        # tk.Button(self, text="Open page two").pack()
-        tk.Button(self, text='Join', command=lambda: self.master.switch_frame(start_Chatroom, self.host.get(),
-                self.port.get())).grid(row=3, column=0, sticky='W', pady=4)
-        tk.Button(self, text='Quit', command=self.master.quit).grid(row=3, column=2, pady=4, sticky='E')
-        tk.Button(self, text='Check', command=lambda: self.printVal()).grid(row=3, column=1, sticky='W', pady=4)
+        self.host_entry = tk.Entry(self.root, font=self.font)
+        self.host_entry.insert(0, 'localhost')
+        self.host_entry.grid(row=1, column=1)
+        self.port_entry = tk.Entry(self.root, font=self.font)
+        self.port_entry.insert(0, '33000')
+        self.port_entry.grid(row=2, column=1)
 
-    def printVal(self):
-        print(self.host.get())
-        print(self.port.get())
-        
-        
-class start_Chatroom(tk.Frame):
-    def __init__(self, master, host, port):
-        self.master = master
-        tk.Frame.__init__(self, self.master)
-        self.master.title = "P2P Chat"
+        self.entry = tk.Entry(self.root, font=self.font)
+        self.entry.grid(row=3, column=1)
+        self.entry.bind('<Return>', self.join_server)
 
-        self.messages_frame = tk.Frame(self.master)
-        self.my_msg = tk.StringVar()  # For the messages to be sent.
-        self.my_msg.set("")
-        self.scrollbar = tk.Scrollbar(self.messages_frame)  # To navigate through past messages.
-        # Following will contain the messages.
-        self.msg_list = tk.Listbox(self.messages_frame, height=15, width=50, yscrollcommand=self.scrollbar.set)
-        self.scrollbar.grid(row=0, column=1, sticky='E', rowspan=4)
-        self.msg_list.grid(row=0, column=0, sticky='N')
-        self.messages_frame.grid()
+        tk.Button(self.root, text='Join', command=self.join_server).grid(row=4, column=0, sticky='W', pady=4)
+        tk.Button(self.root, text='Host', command=self.start_server).grid(row=4, column=1, sticky='W', pady=4)
+        tk.Button(self.root, text='Quit', command=exit).grid(row=4, column=2, pady=4, sticky='E')
 
-        self.entry_field = tk.Entry(self.master, textvariable=self.my_msg)
-        self.entry_field.bind("<Return>", self.send_msg)
-        self.entry_field.grid()
-        self.send_button = tk.Button(self.master, text="Send", command=self.send_msg)
-        self.send_button.grid()
+    def run(self):
+        """Handle login window actions"""
+        self.root.mainloop()
+        self.root.destroy()
 
-        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
+    def join_server(self, event=None):
+        """Get login from login box and close login window"""
+        self.login = self.entry.get()
+        self.host = self.host_entry.get()
+        self.port = self.port_entry.get()
+        if not self.host:
+            self.host = 'localhost'
+        if not self.port:
+            self.port = 33000
+        if self.gui.client.connect(self.host, int(self.port)):
+            print("Connected successfully...")
+            self.root.quit()
+        else:
+            GUI.display_alert("Unable to reach server.")
 
-        if port == '':
-            port = 33000
-        port = int(port)
-
-        self.client = Client((host, port))
+    def start_server(self, event=None):
+        self.host = self.host_entry.get()
+        self.port = self.port_entry.get()
+        if not self.host:
+            self.host = 'localhost'
+        if not self.port:
+            self.port = 33000
+        self.gui.server = self.gui.client.host_server(self.host, self.port)
 
 
-    def update_msg(self):
-        while True:
-            msg = self.client.receive()
-            self.msg_list.insert(tk.END, msg)
-            # Auto scrolls to the bottom of the text box
-            self.msg_list.see("end")
+class ChatWindow(Window):
+    def __init__(self, gui, font):
+        super().__init__("P2P Chat", font)
+        self.gui = gui
+        self.messages_list = None
+        self.logins_list = None
+        self.entry = None
+        self.send_button = None
+        self.exit_button = None
+        self.lock = threading.RLock()
+        self.target = ''
+        self.login = self.gui.login_window.login
 
-    def send_msg(self, event=None):
-        msg = self.my_msg.get()
-        self.client.send(msg)
-        self.my_msg.set("")
-        if msg == "{quit}":
-            self.master.quit()
+        self.build_window()
 
-    def on_closing(self, event=None):
+    def build_window(self):
+        # Size config
+        self.root.geometry('800x600')
+        self.root.minsize(600, 400)
+
+        # Frames config
+        main_frame = tk.Frame(self.root)
+        main_frame.grid(row=0, column=0, sticky=tk.N + tk.S + tk.W + tk.E)
+
+        self.root.rowconfigure(0, weight=1)
+        self.root.columnconfigure(0, weight=1)
+
+        # List of messages
+        frame00 = tk.Frame(main_frame)
+        frame00.grid(column=0, row=0, rowspan=2, sticky=tk.N + tk.S + tk.W + tk.E)
+
+        # List of logins
+        frame01 = tk.Frame(main_frame)
+        frame01.grid(column=1, row=0, rowspan=3, sticky=tk.N + tk.S + tk.W + tk.E)
+
+        # Message entry
+        frame02 = tk.Frame(main_frame)
+        frame02.grid(column=0, row=2, columnspan=1, sticky=tk.N + tk.S + tk.W + tk.E)
+
+        # Buttons
+        frame03 = tk.Frame(main_frame)
+        frame03.grid(column=0, row=3, columnspan=2, sticky=tk.N + tk.S + tk.W + tk.E)
+
+        main_frame.rowconfigure(0, weight=1)
+        main_frame.rowconfigure(1, weight=1)
+        main_frame.rowconfigure(2, weight=8)
+        main_frame.columnconfigure(0, weight=1)
+        main_frame.columnconfigure(1, weight=1)
+
+        # ScrolledText widget for displaying messages
+        self.messages_list = scrolledtext.ScrolledText(frame00, wrap='word', font=self.font)
+        self.messages_list.insert(tk.END, 'Welcome to Python Chat\n')
+        self.messages_list.configure(state='disabled')
+
+        # Listbox widget for displaying active users and selecting them
+        self.logins_list = tk.Listbox(frame01, selectmode=tk.SINGLE, font=self.font,
+                                      exportselection=False)
+        self.logins_list.bind('<<ListboxSelect>>', self.selected_login_event)
+
+        # Entry widget for typing messages in
+        self.entry = tk.Text(frame02, font=self.font)
+        self.entry.focus_set()
+        self.entry.bind('<Return>', self.send_entry_event)
+
+        # Button widget for sending messages
+        self.send_button = tk.Button(frame03, text='Send', font=self.font)
+        self.send_button.bind('<Button-1>', self.send_entry_event)
+
+        # Button for exiting
+        self.exit_button = tk.Button(frame03, text='Exit', font=self.font)
+        self.exit_button.bind('<Button-1>', self.exit_event)
+
+        # Positioning widgets in frame
+        self.messages_list.pack(fill=tk.BOTH, expand=tk.YES)
+        self.logins_list.pack(fill=tk.BOTH, expand=tk.YES)
+        self.entry.pack(side=tk.LEFT, fill=tk.BOTH, expand=tk.YES)
+        self.send_button.pack(side=tk.LEFT, fill=tk.BOTH, expand=tk.YES)
+        self.exit_button.pack(side=tk.LEFT, fill=tk.BOTH, expand=tk.YES)
+
+        # Protocol for closing window using 'x' button
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing_event)
+
+    def run(self):
+        """Handle chat window actions"""
+        self.root.mainloop()
+        self.root.destroy()
+
+    def display_message(self, message):
+        """Display message in ScrolledText widget"""
+        with self.lock:
+            self.messages_list.configure(state='normal')
+            self.messages_list.insert(tk.END, message)
+            self.messages_list.configure(state='disabled')
+            self.messages_list.see(tk.END)
+
+    def on_closing_event(self, event=None):
         """This function is to be called when the window is closed."""
-        self.master.quit()
+        self.exit_event()
 
-        self.my_msg.set("{quit}")
-        self.send_msg()
+    def exit_event(self, event=None):
+        """Send logout message and quit app when "Exit" pressed"""
+        self.gui.notify_server(self.login, 'logout')
+        self.root.quit()
+
+    def send_entry_event(self, event=None):
+        """Send message from entry field to target"""
+        text = self.entry.get(1.0, tk.END)
+        if text != '\n':
+            msg_type = 'priv;' if self.target != 'all' else 'msg;'
+
+            message = msg_type + self.login + ';' + self.target + ';' + text[:-1]
+            print(message)
+            self.gui.client.send_message(message.encode(ENCODING))
+            self.entry.mark_set(tk.INSERT, 1.0)
+            self.entry.delete(1.0, tk.END)
+            self.entry.focus_set()
+        else:
+            messagebox.showinfo('Warning', 'You must enter non-empty message')
+
+        with self.lock:
+            self.messages_list.configure(state='normal')
+            if text != '\n':
+                if self.target != 'all':
+                    msg = '[whisper] ' + self.login + ': ' + text
+                else:
+                    msg = self.login + ': ' + text
+                self.messages_list.insert(tk.END, msg)
+            self.messages_list.configure(state='disabled')
+            self.messages_list.see(tk.END)
+
+        return 'break'
+
+    def selected_login_event(self, event):
+        """Set as target currently selected login on login list"""
+        target = self.logins_list.get(self.logins_list.curselection())
+        self.target = target
+        self.gui.set_target(target)
+
+    def update_login_list(self, active_users):
+        """Update listbox with list of active users"""
+        self.logins_list.delete(0, tk.END)
+        for user in active_users:
+            self.logins_list.insert(tk.END, user)
+        self.logins_list.select_set(0)
+        self.target = self.logins_list.get(self.logins_list.curselection())
 
 
 if __name__ == "__main__":
     app = GUI()
-    app.mainloop()
