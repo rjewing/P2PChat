@@ -55,6 +55,7 @@ class GUI(threading.Thread):
         self.client.notify_server(data, action)
 
     def login(self, login):
+        print(login)
         self.notify_server(login, 'login')
 
     def logout(self, logout):
@@ -141,8 +142,6 @@ class LoginWindow(Window):
     def start_server(self, event=None):
         self.host = self.host_entry.get()
         self.port = self.port_entry.get()
-        if not self.host:
-            self.host = ''
         if not self.port:
             self.port = 33000
         self.gui.server = self.gui.client.host_server(self.host, self.port)
@@ -285,6 +284,7 @@ class ChatWindow(Window):
                 self.messages_list.insert(tk.END, msg)
             self.messages_list.configure(state='disabled')
             self.messages_list.see(tk.END)
+
 
         return 'break'
 

@@ -120,11 +120,18 @@ class Client(threading.Thread):
                     elif msg[0] == 'login':
                         self.gui.main_window.update_login_list(msg[1:])
                     elif msg[0] == 'transfer':
-                        self.host_server(host='', port=33005)
-                        self.client_socket.close()
-                        self.connect('', 33005)
-                        self.gui.login(self.gui.main_window.login)
+                        self.host_server(host='', port=33000)
                         self.gui.server = self.server
+                    elif msg[0] == 'connect':
+                        addr = msg[3].split('|')
+                        print(addr)
+                        print(port)
+                        host = addr[0]
+                        port = int(addr[1])
+                        self.client_socket.close()
+                        self.connect(host, port)
+                        print('Login = ' + self.login)
+                        self.gui.login(self.login)
 
     def send_message(self, data, event=None):  # event is passed by binders.
         """Handles sending of messages."""
@@ -141,6 +148,7 @@ class Client(threading.Thread):
         print(action)
         if action_type == "login":
             self.login = action.decode(ENCODING).split(';')[1]
+            print(self.login)
         elif action_type == "logout":
             self.client_socket.close()
 
