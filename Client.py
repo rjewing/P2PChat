@@ -39,9 +39,10 @@ class Client(threading.Thread):
     def connect(self, host, port):
         try:
             self.addr = (host, int(port))
-            # self.client_socket = socket(AF_INET, SOCK_STREAM)
+            self.client_socket = socket(AF_INET, SOCK_STREAM)
             self.client_socket.connect(self.addr)
             self.connected = True
+            print("Connected!")
         except ConnectionRefusedError:
             print("Server is inactive, unable to connect")
             return False
@@ -49,7 +50,6 @@ class Client(threading.Thread):
 
     def host_server(self, host, port):
         self.server = Server(host, int(port))
-        # self.server.start()
         return self.server
 
     def run(self):
@@ -60,10 +60,13 @@ class Client(threading.Thread):
         outputs = [self.client_socket]
         while inputs:
             try:
+                if self.client_socket != inputs[0] or self.client_socket != outputs[0]:
+                    inputs = [self.client_socket]
+                    outputs = [self.client_socket]
                 read, write, exceptional = select.select(inputs, outputs, inputs)
             # if server unexpectedly quits, this will raise ValueError exception (file descriptor < 0)
             except ValueError:
-                print('Server error')
+                print('Server error: select')
                 GUI.display_alert('Server error has occurred. Exit app')
                 self.client_socket.close()
                 break
@@ -73,7 +76,7 @@ class Client(threading.Thread):
                     try:
                         data = self.client_socket.recv(self.buffer_size)
                     except error:
-                        print("Socket error")
+                        print("Socket error: read")
                         GUI.display_alert('Socket error has occurred. Exit app')
                         self.client_socket.close()
                         break
@@ -89,7 +92,7 @@ class Client(threading.Thread):
                     time.sleep(0.05)
 
             if self.client_socket in exceptional:
-                print('Server error')
+                print('Server error: exception')
                 GUI.display_alert('Server error has occurred. Exit app')
                 self.client_socket.close()
                 break
@@ -116,6 +119,12 @@ class Client(threading.Thread):
                         self.gui.display_message(text)
                     elif msg[0] == 'login':
                         self.gui.main_window.update_login_list(msg[1:])
+                    elif msg[0] == 'transfer':
+                        self.host_server(host='', port=33005)
+                        self.client_socket.close()
+                        self.connect('', 33005)
+                        self.gui.login(self.gui.main_window.login)
+                        self.gui.server = self.server
 
     def send_message(self, data, event=None):  # event is passed by binders.
         """Handles sending of messages."""
@@ -129,6 +138,7 @@ class Client(threading.Thread):
     def notify_server(self, action, action_type):
         """Notify server if action is performed by client"""
         self.queue.put(action)
+        print(action)
         if action_type == "login":
             self.login = action.decode(ENCODING).split(';')[1]
         elif action_type == "logout":

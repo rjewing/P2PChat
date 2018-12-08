@@ -22,6 +22,7 @@ class Server(threading.Thread):
         self.queue = queue.Queue()
 
         self.shutdown = False
+        self.quit = False
         try:
             self.sock.bind((str(self.host), int(self.port)))
             self.sock.listen(10)
@@ -44,10 +45,12 @@ class Server(threading.Thread):
         """Main thread method"""
         print("Enter \'quit\' to exit")
         while not self.shutdown:
-            message = input()
-            if message == "quit":
+            if self.quit:
                 self.sock.close()
                 self.shutdown = True
+
+    def shutdown_server(self):
+        self.quit = True
 
     def listen(self):
         """Listen for new connections"""
@@ -127,8 +130,10 @@ class Server(threading.Thread):
         """Process received data"""
         if data:
             message = data.decode(ENCODING)
+            print('SERVER: ' + message)
             message = message.split(";", 3)
 
+            # Login
             if message[0] == 'login':
                 tmp_login = message[1]
 
@@ -143,6 +148,7 @@ class Server(threading.Thread):
                 print(message[1] + ' has logged in')
                 self.update_login_list()
 
+            # Logout
             elif message[0] == 'logout':
                 self.connection_list.remove(self.login_list[message[1]])
                 if message[1] in self.login_list:
@@ -150,15 +156,35 @@ class Server(threading.Thread):
                 print(message[1] + ' has logged out')
                 self.update_login_list()
 
-            elif message[0] == 'msg' and message[2] != 'all':
+            # Whisper / Private message
+            elif message[0] == 'priv':
                 msg = data.decode(ENCODING) + '\n'
                 data = msg.encode(ENCODING)
+                # target = self.login_list[message[2]]
                 self.queue.put((message[2], message[1], data))
 
+            # Broadcast message
             elif message[0] == 'msg':
                 msg = data.decode(ENCODING) + '\n'
                 data = msg.encode(ENCODING)
                 self.queue.put(('all', message[1], data))
+
+            # Server transfer
+            elif message[0] == 'transfer':
+                msg = data.decode(ENCODING) + '\n'
+                data = msg.encode(ENCODING)
+                new_host = None
+                for d in self.login_list.keys():
+                    if d != message[1]:
+                        new_host = d
+                        break
+                print('New Host: ' + new_host)
+                if new_host is not None:
+                    self.queue.put((new_host, message[1], data))
+                    conn = 'connect;all;' + message[1] + ';'
+                    self.queue.put(('all', message[1], data))
+
+
 
     def remove_connection(self, connection):
         """Remove connection from server's connection list"""

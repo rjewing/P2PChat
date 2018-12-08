@@ -55,10 +55,10 @@ class GUI(threading.Thread):
         self.client.notify_server(data, action)
 
     def login(self, login):
-        self.client.notify_server(login, 'login')
+        self.notify_server(login, 'login')
 
     def logout(self, logout):
-        self.client.notify_server(logout, 'logout')
+        self.notify_server(logout, 'logout')
 
     def center(self, win):
         win.update_idletasks()
@@ -142,10 +142,12 @@ class LoginWindow(Window):
         self.host = self.host_entry.get()
         self.port = self.port_entry.get()
         if not self.host:
-            self.host = 'localhost'
+            self.host = ''
         if not self.port:
             self.port = 33000
         self.gui.server = self.gui.client.host_server(self.host, self.port)
+        if self.gui.server is not None:
+            print('Hosted server successfully...')
 
 
 class ChatWindow(Window):
@@ -250,12 +252,14 @@ class ChatWindow(Window):
     def exit_event(self, event=None):
         """Send logout message and quit app when "Exit" pressed"""
         self.gui.notify_server(self.login, 'logout')
+        if self.gui.server is not None:
+            self.gui.server.shutdown_server()
         self.root.quit()
 
     def send_entry_event(self, event=None):
         """Send message from entry field to target"""
         text = self.entry.get(1.0, tk.END)
-        if text != '\n':
+        if text != '\n' and text != 'server\n':
             msg_type = 'priv;' if self.target != 'all' else 'msg;'
 
             message = msg_type + self.login + ';' + self.target + ';' + text[:-1]
@@ -264,6 +268,10 @@ class ChatWindow(Window):
             self.entry.mark_set(tk.INSERT, 1.0)
             self.entry.delete(1.0, tk.END)
             self.entry.focus_set()
+        elif text == 'server\n':
+            message = "transfer;{};{};{}".format(self.login, self.target, text[:-1])
+            self.gui.client.send_message(message.encode(ENCODING))
+            self.gui.server.shutdown_server()
         else:
             messagebox.showinfo('Warning', 'You must enter non-empty message')
 
