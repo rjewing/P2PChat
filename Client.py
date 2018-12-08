@@ -124,10 +124,10 @@ class Client(threading.Thread):
                         self.gui.server = self.server
                     elif msg[0] == 'connect':
                         addr = msg[3].split('|')
-                        print(addr)
-                        print(port)
                         host = addr[0]
                         port = int(addr[1])
+                        print(host)
+                        print(port)
                         self.client_socket.close()
                         self.connect(host, port)
                         print('Login = ' + self.login)

@@ -63,7 +63,6 @@ class Server(threading.Thread):
                 connection.setblocking(False)
                 if connection not in self.connection_list:
                     self.connection_list.append(connection)
-                    self.address_list.append(address)
             except socket.error:
                 pass
             finally:
@@ -183,7 +182,7 @@ class Server(threading.Thread):
                 print('New Host: ' + new_host)
                 if new_host is not None:
                     self.queue.put((new_host, message[1], data))
-                    ip, port = self.login_list[new_host].getsockname()
+                    ip, port = self.login_list[new_host].getsockpeer()
                     conn = 'connect;all;' + message[1] + ';' + '{}|{}'.format(ip, 33000)
                     self.queue.put(('all', message[1], conn))
 
