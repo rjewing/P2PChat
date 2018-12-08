@@ -4,6 +4,8 @@ import threading
 from tkinter import scrolledtext
 from tkinter import messagebox
 
+import time
+
 
 ENCODING = 'utf-8'
 
@@ -105,7 +107,7 @@ class LoginWindow(Window):
         tk.Label(self.root, text="Name").grid(row=3, sticky='W', padx=4)
 
         self.host_entry = tk.Entry(self.root, font=self.font)
-        self.host_entry.insert(0, 'localhost')
+        # self.host_entry.insert(0, 'localhost')
         self.host_entry.grid(row=1, column=1)
         self.port_entry = tk.Entry(self.root, font=self.font)
         self.port_entry.insert(0, '33000')
@@ -145,8 +147,6 @@ class LoginWindow(Window):
         if not self.port:
             self.port = 33000
         self.gui.server = self.gui.client.host_server(self.host, self.port)
-        if self.gui.server is not None:
-            print('Hosted server successfully...')
 
 
 class ChatWindow(Window):
@@ -244,15 +244,22 @@ class ChatWindow(Window):
             self.messages_list.configure(state='disabled')
             self.messages_list.see(tk.END)
 
+    def transfer_server(self):
+        message = "transfer;{};{};".format(self.login, self.target)
+        self.gui.client.send_message(message.encode(ENCODING))
+
     def on_closing_event(self, event=None):
         """This function is to be called when the window is closed."""
         self.exit_event()
 
     def exit_event(self, event=None):
         """Send logout message and quit app when "Exit" pressed"""
-        self.gui.notify_server(self.login, 'logout')
         if self.gui.server is not None:
+            self.transfer_server()
+            time.sleep(2)
             self.gui.server.shutdown_server()
+        else:
+            self.gui.notify_server(self.login, 'logout')
         self.root.quit()
 
     def send_entry_event(self, event=None):
@@ -267,10 +274,6 @@ class ChatWindow(Window):
             self.entry.mark_set(tk.INSERT, 1.0)
             self.entry.delete(1.0, tk.END)
             self.entry.focus_set()
-        elif text == 'server\n':
-            message = "transfer;{};{};{}".format(self.login, self.target, text[:-1])
-            self.gui.client.send_message(message.encode(ENCODING))
-            self.gui.server.shutdown_server()
         else:
             messagebox.showinfo('Warning', 'You must enter non-empty message')
 

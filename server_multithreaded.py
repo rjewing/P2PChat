@@ -28,7 +28,9 @@ class Server(threading.Thread):
             self.sock.bind((str(self.host), int(self.port)))
             self.sock.listen(10)
             self.sock.setblocking(False)
+            print('Server started!')
         except socket.error:
+            print('Server could not be started...')
             self.shutdown = True
 
         if not self.shutdown:
@@ -182,8 +184,10 @@ class Server(threading.Thread):
                 print('New Host: ' + new_host)
                 if new_host is not None:
                     self.queue.put((new_host, message[1], data))
-                    ip, port = self.login_list[new_host].getsockpeer()
+                    time.sleep(0.5)
+                    ip, port = self.login_list[new_host].getpeername()
                     conn = 'connect;all;' + message[1] + ';' + '{}|{}'.format(ip, 33000)
+                    conn = conn.encode(ENCODING)
                     self.queue.put(('all', message[1], conn))
 
 
