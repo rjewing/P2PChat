@@ -2,13 +2,10 @@
 """Script for Tkinter GUI chat client."""
 from socket import AF_INET, socket, SOCK_STREAM, error
 import queue
-import time
 import select
 
 from GUI import *
-# from server_select import Server
-# from server_multi import Server
-from server_multithreaded import Server
+from Server import Server
 
 ENCODING = 'utf-8'
 
