@@ -38,7 +38,8 @@ There are three files in this application:
 The functions in each file is described below.
 
 ## Client.py
-This file is responsible for 
+This file is responsible for connecting the server and GUI interfaces together, processing messages, and handling the user to server communication. 
+
 * **def connect()** - Connects to an ip and a port (this is a server essentially).
 * **def host_server()** - Starts a server.
 * **def run()** - Main loop to receive data and write data to a socket.
@@ -53,7 +54,7 @@ This file is responsible for
 * **def notify_server()** - Log in and log out, notifies the server of an action, and changes the client itself. In most cases, just places an action in the queue.
 
 ## Server.py
-This file is responsible for 
+This file is responsible for transferring messages between users, and managing a server for users to connect to.
 
 * **def init()** - Binds the socket to a host and port (address) and listens to it for connections.
 * **def run()** - Main thread, keeps the server alive while you want it to.
@@ -70,7 +71,7 @@ This file is responsible for
 * **def update_login_list()** - Tell users about a new person who joins the lobby and tells users to update their list.
 
 ## GUI.py
-This file is responsible for 
+This file is responsible for creating the login and Chat room windows, updating the widgets, and triggering events when a user action occurs.
 
 There are four different classes in this file:
 1. class GUI
@@ -86,7 +87,7 @@ There are four different classes in this file:
     * **def logout()** - Notifies the server that a logout action is occurring.
     * **def center()** - Centers the window.
 2. class Window
-    Initializes the window. Sets the parameters for the font and title.
+    * Initializes the window. Sets the parameters for the font and title.
 
 3. class LoginWindow
 
