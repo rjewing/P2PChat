@@ -4,7 +4,7 @@
 #### 12.11.18
 
 <p align="center">
-<img src="chatrooms.JPG" width="50%" />
+<img src="chatrooms.JPG" />
 </p>
 
 This project uses the Python 3 interpreter. 
