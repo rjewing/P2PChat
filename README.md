@@ -3,15 +3,30 @@
 ### Written by Ryan Ewing and David Li
 #### 12.11.18
 
+<center>
+![Chatroom](chatrooms.JPG)
+</center>
+
 This project uses the Python 3 interpreter. 
 
-How to use:
-1. 
-2. 
-3. 
-4. 
-5. 
-6. 
+## How to use:
+* Run `python Client.py` to start a client.
+* A window will come up asking for a **Host**, **Port**, and **Name**.
+* To host your own server, place a valid IP address into the **Host** entry. Enter a port number and then click the **Host** button. 
+    * You can leave this section blank to host a local server.
+* Once a known server is running, enter the IP address in the **Host**, the appropriate port in **port**, and your name in **Name**.
+* Click join and you will enter the chat room. 
+* In the chat room, you can choose who you want to message to on the right hand side of the chat box. 
+    * There are private messages and public messages.
+        * To talk to a specific person, click on their name on the right hand side.
+        * To talk to everyone in the chat room, click on *all*
+* You may send the message by clicking the *send* button or pressing enter when there is text in the text box.
+* To exit, click on the *exit* button. 
+
+## Server Passoff
+* When the person hosting the server exits, the program will attempt to find another person to host the server.
+    * If there are no other chat users, the program will quit.
+    * If there are one or more other users, then the program will pass the server to the oldest user (the user who joined closest in time to the host).
 
 There are three files in this application:
 * Client.py 
@@ -71,7 +86,7 @@ There are four different classes in this file:
     * **def run()** - 
     * **def join_server()** - 
     * **def start_server()** - 
-    
+
 4. ChatWindow
 
     * **def build_window()** - 
