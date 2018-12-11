@@ -3,13 +3,13 @@
 ### Written by Ryan Ewing and David Li
 #### 12.11.18
 
-<center>
-![Chatroom](chatrooms.JPG)
-</center>
+<p align="center">
+<img src="chatrooms.JPG" width="50%" />
+</p>
 
 This project uses the Python 3 interpreter. 
 
-## How to use:
+# How to use:
 * Run `python Client.py` to start a client.
 * A window will come up asking for a **Host**, **Port**, and **Name**.
 * To host your own server, place a valid IP address into the **Host** entry. Enter a port number and then click the **Host** button. 
@@ -23,11 +23,13 @@ This project uses the Python 3 interpreter.
 * You may send the message by clicking the *send* button or pressing enter when there is text in the text box.
 * To exit, click on the *exit* button. 
 
-## Server Passoff
+#### Server Pass Off
 * When the person hosting the server exits, the program will attempt to find another person to host the server.
     * If there are no other chat users, the program will quit.
     * If there are one or more other users, then the program will pass the server to the oldest user (the user who joined closest in time to the host).
 
+
+# Files
 There are three files in this application:
 * Client.py 
 * GUI.py 
@@ -71,40 +73,36 @@ This file is responsible for
 This file is responsible for 
 
 There are four different classes in this file:
-1. GUI
+1. class GUI
 
-    * **def run()** - 
-    * *static methods* - 
-    * **logout()** - 
-    * **center()** -  
-2. Window
+    * **def run()** - Runs the GUI file to produce two windows. A *LogInWindow* is created and will keep running until a button is pressed. This is how the *LogInWindow* switches to the Chat room window. 
+    * **def display_alert** - Displays a pop up window when an error occurs.
+    * **def update_login_list()** - Updates the login list for the current user.
+    * **def display_message()** - Displays a recently recevied message.
+    * **def send_message()** - Sends the user's message to the server.
+    * **def set_target()** - Sets the target the user wants to send a private message to.
+    * **def notify_server()** - Sends a particular action to the server.
+    * **def login()** - Notifies the server that a login action is occurring.
+    * **def logout()** - Notifies the server that a logout action is occurring.
+    * **def center()** - Centers the window.
+2. class Window
     Initializes the window. Sets the parameters for the font and title.
 
-3. LoginWindow
+3. class LoginWindow
 
-    * **def build_window()** - 
-    * **def run()** - 
-    * **def join_server()** - 
-    * **def start_server()** - 
+    * **def build_window()** - Tkinter code to build the login window.
+    * **def run()** - Creates a mainloop for the login window to exist, termiantes when exited.
+    * **def join_server()** - Obtain information from the login box to join a specific server. Will show a pop up if the user is unable to reach the server.
+    * **def start_server()** - Starts the server.
 
-4. ChatWindow
+4. class ChatWindow
 
-    * **def build_window()** - 
-    * **def run()** - 
-    * **def display_message()** - 
-    * **def transfer_server()** - 
-    * **def display_message()** - 
-    * **def on_closing_event()** - 
-    * **def exit_event()** - 
-    * **def send_entry_event()** - 
-    * **def selected_login_event()** - 
-    * **def update_login_list()** - 
-
-
-First creates a LogInWindow, expect it to move on
-However, the login window keeps running until a button is pressed
-This is how the windows "Switch"
-
-#### def run() 
-Login window starts, keeps running until button pressed, then chat_window is built, not run yet, then server is notified of login, and then the chat window starts
-
+    * **def build_window()** - Builds the tkitner window for the chat room.
+    * **def run()** - Creates a mainloop for the Chat room window to exist, termiantes when exited.
+    * **def display_message()** - Displays a message in the ScrolledText widget.
+    * **def transfer_server()** - Transfers the server to another user.
+    * **def on_closing_event()** - Called when a window is closed.
+    * **def exit_event()** - Sends a logout message and quits application when the *Exit* key is pressed.
+    * **def send_entry_event()** - Sends a message from the entry field to the specified target(s).
+    * **def selected_login_event()** - Set a target currently selected on the login list.
+    * **def update_login_list()** - Update the listbox with a list of active users in the Chat room. 
